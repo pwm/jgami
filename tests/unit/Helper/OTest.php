@@ -11,7 +11,7 @@ final class OTest extends TestCase
     /**
      * @test
      */
-    public function f(): void
+    public function it_creates_stdClass_from_array(): void
     {
         $as = [
             [],
