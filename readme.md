@@ -47,11 +47,11 @@ $json = '{
     },
     "pets": [
         {
-            "name": "Woof",
+            "name": ["Woof"],
             "type": "Dog"
         },
         {
-            "name": "Mr. Grumpy",
+            "name": ["Mr. Grumpy", "Mrs. Grumpy"],
             "type": "Cat"
         }
     ]
@@ -72,11 +72,11 @@ $expectedJson = '{
     },
     "pets": [
         {
-            "name": "Woof <3",
+            "name": ["Woof <3"],
             "type": "Dog"
         },
         {
-            "name": "Mr. Grumpy <3",
+            "name": ["Mr. Grumpy <3", "Mrs. Grumpy <3"],
             "type": "Cat"
         }
     ]
