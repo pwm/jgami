@@ -7,9 +7,7 @@
 
 Have you ever mapped a function over a list? Now you can do the same with JSON!
 
-JGami gives a handy way to update values in arbitrarily complex JSON structures while preserving its structural integrity.
-
-It also provides a simple API for targeting parts of a JSON, allowing eg. to update only values under a specified path.
+JGami provides a simple API to update values in arbitrarily complex JSON structures while preserving structural integrity.
 
 ## Table of Contents
 
@@ -31,7 +29,10 @@ PHP 7.1+
 
 ## Usage
 
+It's probably easiest to dive straight into some sample code. We will update some JSON data to our liking by mapping a function over it:
+
 ```php
+// What we have
 $json = '{
     "name": "Alice",
     "age": 27,
@@ -56,6 +57,7 @@ $json = '{
     ]
 }';
 
+// What we want
 $expectedJson = '{
     "name": "Alice Wonderland",
     "age": 37,
@@ -80,22 +82,28 @@ $expectedJson = '{
     ]
 }';
 
+// Our update function, to be mapped over our JSON data
 $f = function (JsonNode $node): JsonNode {
+    // Replace "Graphs" with "Trees"
     if ($node->val() === 'Graphs') {
         return StringNode::from($node, 'Trees');
     }
+    // Add 10 to values with key "age"
     if ($node->key()->eq('age')) {
-        return IntNode::from($node, 37);
+        return IntNode::from($node, $node->val() + 10);
     }
+    // Add " <3" to values in paths with "pets" and "name"
     if ($node->path()->hasAll('pets', 'name')) {
-        return StringNode::from($node, sprintf('%s <3', $node->val()));
+        return StringNode::from($node, $node->val() . ' <3');
     }
+    // Add " Wonderland" to values with key "name" that has no "pets" in their path
     if ($node->path()->hasNone('pets') && $node->key()->eq('name')) {
-        return StringNode::from($node, 'Alice Wonderland');
+        return StringNode::from($node, $node->val() . ' Wonderland');
     }
     return $node;
 };
 
+// true
 assert(
     json_encode(json_decode($expectedJson))
     ===
