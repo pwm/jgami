@@ -21,7 +21,7 @@ JGami provides a simple API to update values in arbitrarily complex JSON structu
 
 ## Requirements
 
-PHP 7.1+
+PHP 7.2+
 
 ## Installation
 
