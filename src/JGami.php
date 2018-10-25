@@ -84,30 +84,31 @@ final class JGami
         return function ($kvPair): array {
             [$key, $path, $val] = (array)$kvPair;
 
+            $tplNode = new NullNode(new NodeKey($key), new NodePath($path));
             switch (JsonType::fromVal($val)->val()) {
                 case JsonType::OBJECT:
-                    $jsonNode = new ObjectNode(new NodeKey($key), new NodePath($path), $val);
+                    $jsonNode = ObjectNode::from($tplNode, $val);
                     $node = count((array)$val) > 0
                         ? Node::internalObject($jsonNode)
                         : Node::leaf($jsonNode);
                     return [$node, (array)$val];
                 case JsonType::ARRAY:
-                    $jsonNode = new ArrayNode(new NodeKey($key), new NodePath($path), $val);
+                    $jsonNode = ArrayNode::from($tplNode, $val);
                     $node = count($val) > 0
                         ? Node::internalArray($jsonNode)
                         : Node::leaf($jsonNode);
                     return [$node, $val];
                 case JsonType::BOOL:
-                    return [Node::leaf(new BoolNode(new NodeKey($key), new NodePath($path), $val)), []];
+                    return [Node::leaf(BoolNode::from($tplNode, $val)), []];
                 case JsonType::INT:
-                    return [Node::leaf(new IntNode(new NodeKey($key), new NodePath($path), $val)), []];
+                    return [Node::leaf(IntNode::from($tplNode, $val)), []];
                 case JsonType::FLOAT:
-                    return [Node::leaf(new FloatNode(new NodeKey($key), new NodePath($path), $val)), []];
+                    return [Node::leaf(FloatNode::from($tplNode, $val)), []];
                 case JsonType::STRING:
-                    return [Node::leaf(new StringNode(new NodeKey($key), new NodePath($path), $val)), []];
+                    return [Node::leaf(StringNode::from($tplNode, $val)), []];
                 case JsonType::NULL:
                 default:
-                    return [Node::leaf(new NullNode(new NodeKey($key), new NodePath($path))), []];
+                    return [Node::leaf($tplNode), []];
             }
         };
     }

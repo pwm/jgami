@@ -15,13 +15,6 @@ final class StringNode implements JsonNode
     /** @var string */
     private $val;
 
-    public function __construct(NodeKey $key, NodePath $path, string $val)
-    {
-        $this->key = $key;
-        $this->path = $path;
-        $this->val = $val;
-    }
-
     public static function from(JsonNode $node, string $val): self
     {
         return new self($node->key(), $node->path(), $val);
@@ -40,5 +33,15 @@ final class StringNode implements JsonNode
     public function val(): string
     {
         return $this->val;
+    }
+
+    private function __construct(
+        NodeKey $key,
+        NodePath $path,
+        string $val
+    ) {
+        $this->key = $key;
+        $this->path = $path;
+        $this->val = $val;
     }
 }

@@ -71,11 +71,13 @@ final class JGamiTest extends TestCase
     {
         $jsonString = '{"key": 1}';
 
+        // This is the only way to violate key/path integrity, ie. to purposefully
+        // use a new NullNode with custom key/path as a template
         $changeKey = function (JsonNode $node): JsonNode {
-            return new IntNode(new NodeKey('new-key'), $node->path(), 2);
+            return IntNode::from(new NullNode(new NodeKey('new-key'), $node->path()), 2);
         };
         $changePath = function (JsonNode $node): JsonNode {
-            return new IntNode($node->key(), new NodePath('new-path'), 2);
+            return IntNode::from(new NullNode($node->key(), new NodePath('new-path')), 2);
         };
 
         try {
