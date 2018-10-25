@@ -4,7 +4,8 @@
     "type": "library",
     "keywords": [
         "mapping",
-        "json"
+        "json",
+        "tree"
     ],
     "homepage": "https://github.com/pwm/jgami",
     "license": "MIT",
@@ -40,6 +41,7 @@
         }
     },
     "scripts": {
+        "utest": "vendor/bin/phpunit",
         "phpcs": "vendor/bin/phpcs --standard=PSR2 --warning-severity=0 src",
         "phpstan": "vendor/bin/phpstan analyse --ansi -l 7 src",
         "infection": "vendor/bin/infection --log-verbosity=2 --only-covered"

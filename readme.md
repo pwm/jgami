@@ -5,7 +5,11 @@
 [![Test Coverage](https://api.codeclimate.com/v1/badges/94f5bb5073dc902b547f/test_coverage)](https://codeclimate.com/github/pwm/jgami/test_coverage)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Map functions over JSON.
+Have you ever mapped a function over a list? Now you can do the same with JSON!
+
+JGami gives a handy way to update values in arbitrarily complex JSON structures while preserving its structural integrity.
+
+It also provides a simple API for targeting parts of a JSON, allowing eg. to update only values under a specified path.
 
 ## Table of Contents
 
@@ -105,7 +109,7 @@ TBD
 
 ## Tests
 
-	$ vendor/bin/phpunit
+	$ composer utest
 	$ composer phpcs
 	$ composer phpstan
 	$ composer infection
