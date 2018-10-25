@@ -15,13 +15,6 @@ final class FloatNode implements JsonNode
     /** @var float */
     private $val;
 
-    public function __construct(NodeKey $key, NodePath $path, float $val)
-    {
-        $this->key = $key;
-        $this->path = $path;
-        $this->val = $val;
-    }
-
     public static function from(JsonNode $node, float $val): self
     {
         return new self($node->key(), $node->path(), $val);
@@ -40,5 +33,15 @@ final class FloatNode implements JsonNode
     public function val(): float
     {
         return $this->val;
+    }
+
+    private function __construct(
+        NodeKey $key,
+        NodePath $path,
+        float $val
+    ) {
+        $this->key = $key;
+        $this->path = $path;
+        $this->val = $val;
     }
 }

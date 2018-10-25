@@ -22,7 +22,8 @@ final class NodeTest extends TestCase
      */
     public function it_creates_from_internal_object_node(): void
     {
-        $node = Node::internalObject(new ObjectNode(new NodeKey('key'), new NodePath('path'), new stdClass()));
+        $tplNode = new NullNode(new NodeKey('key'), new NodePath('path'));
+        $node = Node::internalObject(ObjectNode::from($tplNode, new stdClass()));
 
         self::assertInstanceOf(Node::class, $node);
         self::assertInstanceOf(ObjectNode::class, $node->getJsonNode());
@@ -34,7 +35,8 @@ final class NodeTest extends TestCase
      */
     public function it_creates_from_internal_array_node(): void
     {
-        $node = Node::internalArray(new ArrayNode(new NodeKey('key'), new NodePath('path'), []));
+        $tplNode = new NullNode(new NodeKey('key'), new NodePath('path'));
+        $node = Node::internalArray(ArrayNode::from($tplNode, []));
 
         self::assertInstanceOf(Node::class, $node);
         self::assertInstanceOf(ArrayNode::class, $node->getJsonNode());
@@ -46,11 +48,13 @@ final class NodeTest extends TestCase
      */
     public function it_creates_from_leaf_json_node(): void
     {
-        $nullNode = Node::leaf(new NullNode(new NodeKey('key'), new NodePath('path')));
-        $boolNode = Node::leaf(new BoolNode(new NodeKey('key'), new NodePath('path'), true));
-        $intNode = Node::leaf(new IntNode(new NodeKey('key'), new NodePath('path'), 1234));
-        $floatNode = Node::leaf(new FloatNode(new NodeKey('key'), new NodePath('path'), 12.34));
-        $stringNode = Node::leaf(new StringNode(new NodeKey('key'), new NodePath('path'), 'val'));
+        $tplNode = new NullNode(new NodeKey('key'), new NodePath('path'));
+
+        $nullNode = Node::leaf($tplNode);
+        $boolNode = Node::leaf(BoolNode::from($tplNode, true));
+        $intNode = Node::leaf(IntNode::from($tplNode, 1234));
+        $floatNode = Node::leaf(FloatNode::from($tplNode, 12.34));
+        $stringNode = Node::leaf(StringNode::from($tplNode, 'val'));
 
         self::assertInstanceOf(Node::class, $nullNode);
         self::assertInstanceOf(Node::class, $boolNode);

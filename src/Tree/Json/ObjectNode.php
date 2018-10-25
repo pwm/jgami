@@ -16,13 +16,6 @@ final class ObjectNode implements JsonNode
     /** @var stdClass */
     private $val;
 
-    public function __construct(NodeKey $key, NodePath $path, stdClass $val)
-    {
-        $this->key = $key;
-        $this->path = $path;
-        $this->val = $val;
-    }
-
     public static function from(JsonNode $node, stdClass $val): self
     {
         return new self($node->key(), $node->path(), $val);
@@ -41,5 +34,15 @@ final class ObjectNode implements JsonNode
     public function val(): stdClass
     {
         return $this->val;
+    }
+
+    private function __construct(
+        NodeKey $key,
+        NodePath $path,
+        stdClass $val
+    ) {
+        $this->key = $key;
+        $this->path = $path;
+        $this->val = $val;
     }
 }

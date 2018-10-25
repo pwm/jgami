@@ -15,13 +15,6 @@ final class BoolNode implements JsonNode
     /** @var bool */
     private $val;
 
-    public function __construct(NodeKey $key, NodePath $path, bool $val)
-    {
-        $this->key = $key;
-        $this->path = $path;
-        $this->val = $val;
-    }
-
     public static function from(JsonNode $node, bool $val): self
     {
         return new self($node->key(), $node->path(), $val);
@@ -40,5 +33,15 @@ final class BoolNode implements JsonNode
     public function val(): bool
     {
         return $this->val;
+    }
+
+    private function __construct(
+        NodeKey $key,
+        NodePath $path,
+        bool $val
+    ) {
+        $this->key = $key;
+        $this->path = $path;
+        $this->val = $val;
     }
 }

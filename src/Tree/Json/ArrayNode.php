@@ -15,13 +15,6 @@ final class ArrayNode implements JsonNode
     /** @var array */
     private $val;
 
-    public function __construct(NodeKey $key, NodePath $path, array $val)
-    {
-        $this->key = $key;
-        $this->path = $path;
-        $this->val = $val;
-    }
-
     public static function from(JsonNode $node, array $val): self
     {
         return new self($node->key(), $node->path(), $val);
@@ -40,5 +33,15 @@ final class ArrayNode implements JsonNode
     public function val(): array
     {
         return $this->val;
+    }
+
+    private function __construct(
+        NodeKey $key,
+        NodePath $path,
+        array $val
+    ) {
+        $this->key = $key;
+        $this->path = $path;
+        $this->val = $val;
     }
 }
