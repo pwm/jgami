@@ -110,6 +110,47 @@ assert(
     json_encode(JGami::map($f, json_decode($json)))
 );
 ```
+
+Modification of values is restricted to leaf nodes. This preserves structural integrity. The only exception is extending leaf nodes as seem by the following example:
+
+```php
+$json = '{
+    "metadata": "To be filled"
+}';
+
+$expectedJson = '{
+    "metadata": {
+        "species": "Human",
+        "planet": "Earth",
+        "galacticLevel": 3,
+        "note": "Observe only"
+    }
+}';
+
+$f = function (JsonNode $node): JsonNode {
+    if ($node->key()->eq('metadata')) {
+        // Fill in metadata, provided by our galactic overlords
+        $val = O::from([
+            'species'       => 'Human',
+            'planet'        => 'Earth',
+            'galacticLevel' => 3,
+            'note'          => 'Observe only',
+        ]);
+        // Replace the existing value with the above
+        return ObjectNode::from($node, $val);
+    }
+    return $node;
+};
+
+// true
+assert(
+    json_encode(json_decode($expectedJson))
+    ===
+    json_encode(JGami::map($f, json_decode($json)))
+);
+```
+
+This preserves existing structure while extending it with a new substructure.
  
 ## How it works
 

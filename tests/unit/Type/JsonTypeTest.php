@@ -34,7 +34,7 @@ final class JsonTypeTest extends TestCase
     private static function typeValMap(): array
     {
         return [
-            JsonType::OBJECT => new stdClass,
+            JsonType::OBJECT => new stdClass(),
             JsonType::ARRAY  => [],
             JsonType::NULL   => null,
             JsonType::BOOL   => true,
