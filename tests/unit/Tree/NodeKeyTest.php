@@ -1,10 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace Pwm\JGami\Tree\Json\Prop;
+namespace Pwm\JGami\Tree;
 
 use PHPUnit\Framework\TestCase;
 
+/**
+ * @group Tree
+ */
 final class NodeKeyTest extends TestCase
 {
     /**
