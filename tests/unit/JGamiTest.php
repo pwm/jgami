@@ -4,19 +4,16 @@ declare(strict_types=1);
 namespace Pwm\JGami;
 
 use PHPUnit\Framework\TestCase;
-use Pwm\JGami\Exception\IntegrityViolation;
-use Pwm\JGami\Tree\Json\ArrayNode;
-use Pwm\JGami\Tree\Json\BoolNode;
-use Pwm\JGami\Tree\Json\FloatNode;
-use Pwm\JGami\Tree\Json\IntNode;
-use Pwm\JGami\Tree\Json\JsonNode;
-use Pwm\JGami\Tree\Json\NullNode;
-use Pwm\JGami\Tree\Json\ObjectNode;
-use Pwm\JGami\Tree\Json\Prop\NodeKey;
-use Pwm\JGami\Tree\Json\Prop\NodePath;
-use Pwm\JGami\Tree\Json\StringNode;
+use Pwm\JGami\Json\JArray;
+use Pwm\JGami\Json\JBool;
+use Pwm\JGami\Json\JFloat;
+use Pwm\JGami\Json\JInt;
+use Pwm\JGami\Json\JNull;
+use Pwm\JGami\Json\JObject;
+use Pwm\JGami\Json\JString;
+use Pwm\JGami\Json\JVal;
+use Pwm\JGami\Tree\Node;
 use stdClass;
-use Throwable;
 
 final class JGamiTest extends TestCase
 {
@@ -25,8 +22,8 @@ final class JGamiTest extends TestCase
      */
     public function mapping_id_preserves_json_values(): void
     {
-        $id = function (JsonNode $node): JsonNode {
-            return $node;
+        $id = function (Node $node): JVal {
+            return $node->jVal();
         };
 
         foreach (self::getJsonStrings() as [$initialJsonString, $_]) {
@@ -39,60 +36,43 @@ final class JGamiTest extends TestCase
      */
     public function mapping_a_function_modifies_json_values(): void
     {
-        $transform = function (JsonNode $node): JsonNode {
-            if ($node instanceof ObjectNode) {
-                $node = ArrayNode::from($node, []);
-            } elseif ($node instanceof ArrayNode) {
-                $node = ObjectNode::from($node, new stdClass());
-            } elseif ($node instanceof NullNode) {
-                $node = NullNode::from($node);
-            } elseif ($node instanceof BoolNode) {
-                $node = BoolNode::from($node, ! $node->val());
-            } elseif ($node instanceof IntNode) {
-                $node = IntNode::from($node, $node->val() + 1);
-            } elseif ($node instanceof FloatNode) {
-                $node = FloatNode::from($node, $node->val() * 2);
-            } elseif ($node instanceof StringNode) {
-                $node = StringNode::from($node, strtoupper($node->val()));
+        $f = function (Node $node): JVal {
+            $jVal = $node->jVal();
+            if ($jVal instanceof JObject) {
+                $jVal = new JArray([]);
+            } elseif ($jVal instanceof JArray) {
+                $jVal = new JObject(new stdClass());
+            } elseif ($jVal instanceof JNull) {
+                $jVal = new JNull();
+            } elseif ($jVal instanceof JBool) {
+                $jVal = new JBool(! $jVal->val());
+            } elseif ($jVal instanceof JInt) {
+                $jVal = new JInt($jVal->val() + 1);
+            } elseif ($jVal instanceof JFloat) {
+                $jVal = new JFloat($jVal->val() * 2);
+            } elseif ($jVal instanceof JString) {
+                $jVal = new JString(strtoupper($jVal->val()));
             }
-            return $node;
+            return $jVal;
         };
 
         foreach (self::getJsonStrings() as [$initialJsonString, $expectedJsonString]) {
-            $actualJsonString = json_encode(JGami::map($transform, json_decode($initialJsonString)));
+            $actualJsonString = json_encode(JGami::map($f, json_decode($initialJsonString)));
             self::assertSame($expectedJsonString, $actualJsonString);
         }
     }
 
     /**
      * @test
+     * @expectedException \TypeError
      */
-    public function changing_keys__or_paths_violates_structural_integrity(): void
+    public function map_function_has_to_return_a_jval(): void
     {
-        $jsonString = '{"key": 1}';
-
-        // This is the only way to violate key/path integrity, ie. to purposefully
-        // use a new NullNode with custom key/path as a template
-        $changeKey = function (JsonNode $node): JsonNode {
-            return IntNode::from(new NullNode(new NodeKey('new-key'), $node->path()), 2);
-        };
-        $changePath = function (JsonNode $node): JsonNode {
-            return IntNode::from(new NullNode($node->key(), new NodePath('new-path')), 2);
+        $f = function ($_) {
+            return 'foo'; // not a JVal
         };
 
-        try {
-            JGami::map($changeKey, json_decode($jsonString));
-            self::assertTrue(false);
-        } catch (Throwable $e) {
-            self::assertInstanceOf(IntegrityViolation::class, $e);
-        }
-
-        try {
-            JGami::map($changePath, json_decode($jsonString));
-            self::assertTrue(false);
-        } catch (Throwable $e) {
-            self::assertInstanceOf(IntegrityViolation::class, $e);
-        }
+        JGami::map($f, json_decode('{"a":"b"}'));
     }
 
     private static function getJsonStrings(): array

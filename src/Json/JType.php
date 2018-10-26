@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Pwm\JGami\Type;
+namespace Pwm\JGami\Json;
 
 use stdClass;
 use TypeError;
@@ -11,25 +11,23 @@ use function is_int;
 use function is_float;
 use function is_string;
 
-final class JsonType
+final class JType
 {
-    public const OBJECT = 'object';
-    public const ARRAY  = 'array';
+    public const NULL   = 'null';
     public const BOOL   = 'bool';
     public const INT    = 'int';
     public const FLOAT  = 'float';
     public const STRING = 'string';
-    public const NULL   = 'null';
+    public const OBJECT = 'object';
+    public const ARRAY  = 'array';
 
     /** @var string */
     private $val;
 
     public static function fromVal($val): self
     {
-        if ($val instanceof stdClass) {
-            $type = self::OBJECT;
-        } elseif (is_array($val)) {
-            $type = self::ARRAY;
+        if ($val === null) {
+            $type = self::NULL;
         } elseif (is_bool($val)) {
             $type = self::BOOL;
         } elseif (is_int($val)) {
@@ -38,10 +36,12 @@ final class JsonType
             $type = self::FLOAT;
         } elseif (is_string($val)) {
             $type = self::STRING;
-        } elseif ($val === null) {
-            $type = self::NULL;
+        } elseif ($val instanceof stdClass) {
+            $type = self::OBJECT;
+        } elseif (is_array($val)) {
+            $type = self::ARRAY;
         } else {
-            throw new TypeError('Not a valid JsonType.');
+            throw new TypeError('Not a valid JType.');
         }
         return new self($type);
     }

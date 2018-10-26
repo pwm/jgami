@@ -1,12 +1,15 @@
 <?php
 declare(strict_types=1);
 
-namespace Pwm\JGami\Type;
+namespace Pwm\JGami\Json;
 
 use PHPUnit\Framework\TestCase;
 use stdClass;
 
-final class JsonTypeTest extends TestCase
+/**
+ * @group Json
+ */
+final class JTypeTest extends TestCase
 {
     /**
      * @test
@@ -15,8 +18,8 @@ final class JsonTypeTest extends TestCase
     {
 
         foreach (self::typeValMap() as $expectedType => $jsonType) {
-            $nodeType = JsonType::fromVal($jsonType);
-            self::assertInstanceOf(JsonType::class, $nodeType);
+            $nodeType = JType::fromVal($jsonType);
+            self::assertInstanceOf(JType::class, $nodeType);
             self::assertTrue($nodeType->eq($expectedType));
             self::assertFalse($nodeType->ne($expectedType));
         }
@@ -28,19 +31,19 @@ final class JsonTypeTest extends TestCase
      */
     public function it_throws_on_invalid_type(): void
     {
-        JsonType::fromVal(function () { });
+        JType::fromVal(function () { });
     }
 
     private static function typeValMap(): array
     {
         return [
-            JsonType::OBJECT => new stdClass(),
-            JsonType::ARRAY  => [],
-            JsonType::NULL   => null,
-            JsonType::BOOL   => true,
-            JsonType::INT    => 1234,
-            JsonType::FLOAT  => 12.34,
-            JsonType::STRING => 'val',
+            JType::OBJECT => new stdClass(),
+            JType::ARRAY  => [],
+            JType::NULL   => null,
+            JType::BOOL   => true,
+            JType::INT    => 1234,
+            JType::FLOAT  => 12.34,
+            JType::STRING => 'val',
         ];
     }
 }

@@ -4,19 +4,19 @@ declare(strict_types=1);
 namespace Pwm\JGami;
 
 use Closure;
-use Pwm\JGami\Exception\IntegrityViolation;
-use Pwm\JGami\Tree\Json\ArrayNode;
-use Pwm\JGami\Tree\Json\BoolNode;
-use Pwm\JGami\Tree\Json\FloatNode;
-use Pwm\JGami\Tree\Json\IntNode;
-use Pwm\JGami\Tree\Json\JsonNode;
-use Pwm\JGami\Tree\Json\NullNode;
-use Pwm\JGami\Tree\Json\ObjectNode;
-use Pwm\JGami\Tree\Json\Prop\NodeKey;
-use Pwm\JGami\Tree\Json\Prop\NodePath;
-use Pwm\JGami\Tree\Json\StringNode;
-use Pwm\JGami\Tree\TreeNode;
-use Pwm\JGami\Type\JsonType;
+use Pwm\JGami\Json\JArray;
+use Pwm\JGami\Json\JBool;
+use Pwm\JGami\Json\JFloat;
+use Pwm\JGami\Json\JInt;
+use Pwm\JGami\Json\JNull;
+use Pwm\JGami\Json\JObject;
+use Pwm\JGami\Json\JString;
+use Pwm\JGami\Json\JType;
+use Pwm\JGami\Json\JVal;
+use Pwm\JGami\Tree\Node;
+use Pwm\JGami\Tree\NodeKey;
+use Pwm\JGami\Tree\NodePath;
+use Pwm\JGami\Tree\TaggedNode;
 use Pwm\Treegami\Tree;
 use function array_merge;
 use function count;
@@ -28,103 +28,106 @@ final class JGami
     // Symbol to separate node keys in a node path
     public const PATH_SEPARATOR = '.';
 
-    // (JsonNode a -> JsonNode b) -> Json a -> Json b
+    // (Node a -> JVal b) -> Json a -> Json b
     public static function map(Closure $f, $json)
     {
-        // Node a -> Node b
-        $wrapper = function (TreeNode $treeNode) use ($f): TreeNode {
-            if ($treeNode->isInternal()) {
-                return $treeNode;
+        // TaggedNode a -> TaggedNode b
+        $wrapper = function (TaggedNode $taggedNode) use ($f): TaggedNode {
+            if ($taggedNode->isInternal()) {
+                return $taggedNode;
             }
-            $oldJsonNode = $treeNode->jsonNode();
-            $newJsonNode = $f($oldJsonNode);
-            self::enforceSameKeyAndPath($oldJsonNode, $newJsonNode);
-            return TreeNode::leaf($newJsonNode);
+            $node = $taggedNode->node();
+
+            // Wrapping the user function to enforce well-typed IO
+            // Node a -> JVal b
+            $jVal = (function (Node $node) use ($f): JVal {
+                return $f($node);
+            })($node);
+
+            return TaggedNode::leaf(Node::from($node, $jVal));
         };
 
-        $jsonType = JsonType::fromVal($json);
-        $kvPairList = $jsonType->eq(JsonType::OBJECT) || $jsonType->eq(JsonType::ARRAY)
-            ? [self::ROOT_KEY, self::ROOT_KEY, self::mapToKVPairList($json, self::ROOT_KEY)]
+        $jType = JType::fromVal($json);
+        $keyPathValTupleList = $jType->eq(JType::OBJECT) || $jType->eq(JType::ARRAY)
+            ? [self::ROOT_KEY, self::ROOT_KEY, self::toKeyPathValTupleList($json, self::ROOT_KEY)]
             : [self::ROOT_KEY, self::ROOT_KEY, $json];
 
         return
-            Tree::unfold(self::unfoldKVPair(), $kvPairList)
+            Tree::unfold(self::unfoldKVPair(), $keyPathValTupleList)
                 ->map($wrapper)
                 ->fold(self::foldKVPair())[self::ROOT_KEY];
     }
 
-    // Map k v -> [(k, v)]
-    private static function mapToKVPairList($json, string $path)
+    // (Map k v, String p) -> [(k, p, v)]
+    private static function toKeyPathValTupleList($json, string $path)
     {
-        $kvPairList = [];
-        $jsonType = JsonType::fromVal($json);
+        $keyPathValTupleList = [];
+        $jType = JType::fromVal($json);
         foreach ($json as $key => $val) {
-            $valType = JsonType::fromVal($val);
-            if ($valType->eq(JsonType::OBJECT) || $valType->eq(JsonType::ARRAY)) {
-                $kvPair = [
+            $childType = JType::fromVal($val);
+            if ($childType->eq(JType::OBJECT) || $childType->eq(JType::ARRAY)) {
+                $keyPathValTuple = [
                     $key,
                     self::extendPath($path, (string)$key),
-                    self::mapToKVPairList($val, self::extendPath($path, (string)$key)),
+                    self::toKeyPathValTupleList($val, self::extendPath($path, (string)$key)),
                 ];
-                $kvPairList[] = $valType->eq(JsonType::OBJECT)
-                    ? (object)$kvPair
-                    : $kvPair;
+                $keyPathValTupleList[] = $childType->eq(JType::OBJECT)
+                    ? (object)$keyPathValTuple
+                    : $keyPathValTuple;
             } else {
-                $kvPairList[] = [$key, self::extendPath($path, (string)$key), $val];
+                $keyPathValTupleList[] = [$key, self::extendPath($path, (string)$key), $val];
             }
         }
-        return $jsonType->eq(JsonType::OBJECT)
-            ? (object)$kvPairList
-            : $kvPairList;
+        return $jType->eq(JType::OBJECT)
+            ? (object)$keyPathValTupleList
+            : $keyPathValTupleList;
     }
 
-    // () -> b -> (Node a, [b])
+    // () -> b -> (TaggedNode a, [b])
     private static function unfoldKVPair(): Closure
     {
-        return function ($kvPair): array {
-            [$key, $path, $val] = (array)$kvPair;
-
-            $nullNode = new NullNode(new NodeKey($key), new NodePath($path));
-            switch (JsonType::fromVal($val)->val()) {
-                case JsonType::OBJECT:
-                    $jsonNode = ObjectNode::from($nullNode, $val);
-                    $treeNode = count((array)$val) > 0
-                        ? TreeNode::internalObject($jsonNode)
-                        : TreeNode::leaf($jsonNode);
-                    return [$treeNode, (array)$val];
-                case JsonType::ARRAY:
-                    $jsonNode = ArrayNode::from($nullNode, $val);
-                    $treeNode = count($val) > 0
-                        ? TreeNode::internalArray($jsonNode)
-                        : TreeNode::leaf($jsonNode);
-                    return [$treeNode, $val];
-                case JsonType::BOOL:
-                    return [TreeNode::leaf(BoolNode::from($nullNode, $val)), []];
-                case JsonType::INT:
-                    return [TreeNode::leaf(IntNode::from($nullNode, $val)), []];
-                case JsonType::FLOAT:
-                    return [TreeNode::leaf(FloatNode::from($nullNode, $val)), []];
-                case JsonType::STRING:
-                    return [TreeNode::leaf(StringNode::from($nullNode, $val)), []];
-                case JsonType::NULL:
+        return function ($keyPathValTuple): array {
+            [$key, $path, $val] = (array)$keyPathValTuple;
+            $node = new Node(new NodeKey($key), new NodePath($path));
+            switch (JType::fromVal($val)->val()) {
+                case JType::OBJECT:
+                    $taggedNode = count((array)$val) > 0
+                        ? TaggedNode::internal(Node::from($node, new JObject($val)))
+                        : TaggedNode::leaf(Node::from($node, new JObject($val)));
+                    return [$taggedNode, (array)$val];
+                case JType::ARRAY:
+                    $taggedNode = count($val) > 0
+                        ? TaggedNode::internal(Node::from($node, new JArray($val)))
+                        : TaggedNode::leaf(Node::from($node, new JArray($val)));
+                    return [$taggedNode, $val];
+                case JType::BOOL:
+                    return [TaggedNode::leaf(Node::from($node, new JBool($val))), []];
+                case JType::INT:
+                    return [TaggedNode::leaf(Node::from($node, new JInt($val))), []];
+                case JType::FLOAT:
+                    return [TaggedNode::leaf(Node::from($node, new JFloat($val))), []];
+                case JType::STRING:
+                    return [TaggedNode::leaf(Node::from($node, new JString($val))), []];
+                case JType::NULL:
                 default:
-                    return [TreeNode::leaf($nullNode), []];
+                    return [TaggedNode::leaf(Node::from($node, new JNull())), []];
             }
         };
     }
 
-    // () -> Node a -> [b] -> b
+    // () -> TaggedNode a -> [b] -> b
     private static function foldKVPair(): Closure
     {
-        return function (TreeNode $treeNode, array $acc): array {
-            if ($treeNode->isInternal()) {
-                $val = $treeNode->jsonNode() instanceof ObjectNode
+        return function (TaggedNode $taggedNode, array $acc): array {
+            $node = $taggedNode->node();
+            if ($taggedNode->isInternal()) {
+                $val = $node->jVal() instanceof JObject
                     ? (object)array_merge(...$acc)
                     : array_merge(...$acc);
             } else {
-                $val = $treeNode->jsonNode()->val();
+                $val = $node->jVal()->val();
             }
-            return [$treeNode->jsonNode()->key()->val() => $val];
+            return [$node->key()->val() => $val];
         };
     }
 
@@ -132,24 +135,5 @@ final class JGami
     private static function extendPath(string $path, string $step): string
     {
         return $path . self::PATH_SEPARATOR . $step;
-    }
-
-    // JsonNode a -> JsonNode b -> Exception ()
-    private static function enforceSameKeyAndPath(JsonNode $oldJsonNode, JsonNode $newJsonNode): void
-    {
-        if ($oldJsonNode->key()->ne($newJsonNode->key()->val())) {
-            throw new IntegrityViolation(sprintf(
-                'Key "%s" differs from key "%s"',
-                $newJsonNode->key()->val(),
-                $oldJsonNode->key()->val()
-            ));
-        }
-        if ($oldJsonNode->path()->ne($newJsonNode->path()->val())) {
-            throw new IntegrityViolation(sprintf(
-                'Path "%s" differs from path "%s"',
-                $newJsonNode->path()->val(),
-                $oldJsonNode->path()->val()
-            ));
-        }
     }
 }

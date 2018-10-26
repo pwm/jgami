@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace Pwm\JGami\Tree\Json\Prop;
+namespace Pwm\JGami\Tree;
 
 use TypeError;
 use function is_int;
