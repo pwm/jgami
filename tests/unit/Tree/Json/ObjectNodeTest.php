@@ -20,11 +20,11 @@ final class ObjectNodeTest extends TestCase
         $c2 = new stdClass();
         $c2->foo = 'Y';
 
-        $tplNode = new NullNode(new NodeKey('key'), new NodePath('path'));
-        $node = ObjectNode::from($tplNode, $c2);
+        $nullNode = new NullNode(new NodeKey('key'), new NodePath('path'));
+        $node = ObjectNode::from($nullNode, $c2);
 
-        self::assertTrue($node->key()->eq($tplNode->key()->val()));
-        self::assertTrue($node->path()->eq($tplNode->path()->val()));
+        self::assertTrue($node->key()->eq($nullNode->key()->val()));
+        self::assertTrue($node->path()->eq($nullNode->path()->val()));
         self::assertEquals($c2, $node->val());
     }
 }

@@ -7,7 +7,7 @@ use Pwm\JGami\Tree\Json\ArrayNode;
 use Pwm\JGami\Tree\Json\JsonNode;
 use Pwm\JGami\Tree\Json\ObjectNode;
 
-final class Node
+final class TreeNode
 {
     public const INTERNAL = 'Internal';
     public const LEAF     = 'Leaf';
@@ -37,7 +37,7 @@ final class Node
         return $this->tag === self::INTERNAL;
     }
 
-    public function getJsonNode(): JsonNode
+    public function jsonNode(): JsonNode
     {
         return $this->jsonNode;
     }

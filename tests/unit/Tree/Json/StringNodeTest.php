@@ -14,11 +14,11 @@ final class StringNodeTest extends TestCase
      */
     public function it_creates_from_another_json_node(): void
     {
-        $tplNode = new NullNode(new NodeKey('key'), new NodePath('path'));
-        $node = StringNode::from($tplNode, 'bar');
+        $nullNode = new NullNode(new NodeKey('key'), new NodePath('path'));
+        $node = StringNode::from($nullNode, 'bar');
 
-        self::assertTrue($node->key()->eq($tplNode->key()->val()));
-        self::assertTrue($node->path()->eq($tplNode->path()->val()));
+        self::assertTrue($node->key()->eq($nullNode->key()->val()));
+        self::assertTrue($node->path()->eq($nullNode->path()->val()));
         self::assertSame('bar', $node->val());
     }
 }
