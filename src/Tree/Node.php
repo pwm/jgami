@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Pwm\JGami\Tree;
 
-use Pwm\JGami\Json\JNull;
 use Pwm\JGami\Json\JVal;
 
 final class Node
@@ -18,16 +17,11 @@ final class Node
     public function __construct(
         NodeKey $key,
         NodePath $path,
-        JVal $jVal = null
+        JVal $jVal
     ) {
         $this->key = $key;
         $this->path = $path;
-        $this->jVal = $jVal ?? new JNull();
-    }
-
-    public static function from(self $node, JVal $jVal): self
-    {
-        return new self($node->key(), $node->path(), $jVal);
+        $this->jVal = $jVal;
     }
 
     public function key(): NodeKey

@@ -44,7 +44,7 @@ final class JGami
                 return $f($node);
             })($node);
 
-            return TaggedNode::leaf(Node::from($node, $jVal));
+            return TaggedNode::leaf(new Node($node->key(), $node->path(), $jVal));
         };
 
         $jType = JType::fromVal($json);
@@ -62,7 +62,6 @@ final class JGami
     private static function toKeyPathValTupleList($json, string $path)
     {
         $keyPathValTupleList = [];
-        $jType = JType::fromVal($json);
         foreach ($json as $key => $val) {
             $childType = JType::fromVal($val);
             if ($childType->eq(JType::OBJECT) || $childType->eq(JType::ARRAY)) {
@@ -78,7 +77,7 @@ final class JGami
                 $keyPathValTupleList[] = [$key, self::extendPath($path, (string)$key), $val];
             }
         }
-        return $jType->eq(JType::OBJECT)
+        return JType::fromVal($json)->eq(JType::OBJECT)
             ? (object)$keyPathValTupleList
             : $keyPathValTupleList;
     }
@@ -88,29 +87,30 @@ final class JGami
     {
         return function ($keyPathValTuple): array {
             [$key, $path, $val] = (array)$keyPathValTuple;
-            $node = new Node(new NodeKey($key), new NodePath($path));
             switch (JType::fromVal($val)->val()) {
                 case JType::OBJECT:
+                    $oNode = new Node(new NodeKey($key), new NodePath($path), new JObject($val));
                     $taggedNode = count((array)$val) > 0
-                        ? TaggedNode::internal(Node::from($node, new JObject($val)))
-                        : TaggedNode::leaf(Node::from($node, new JObject($val)));
+                        ? TaggedNode::internal($oNode)
+                        : TaggedNode::leaf($oNode);
                     return [$taggedNode, (array)$val];
                 case JType::ARRAY:
+                    $aNode = new Node(new NodeKey($key), new NodePath($path), new JArray($val));
                     $taggedNode = count($val) > 0
-                        ? TaggedNode::internal(Node::from($node, new JArray($val)))
-                        : TaggedNode::leaf(Node::from($node, new JArray($val)));
+                        ? TaggedNode::internal($aNode)
+                        : TaggedNode::leaf($aNode);
                     return [$taggedNode, $val];
                 case JType::BOOL:
-                    return [TaggedNode::leaf(Node::from($node, new JBool($val))), []];
+                    return [TaggedNode::leaf(new Node(new NodeKey($key), new NodePath($path), new JBool($val))), []];
                 case JType::INT:
-                    return [TaggedNode::leaf(Node::from($node, new JInt($val))), []];
+                    return [TaggedNode::leaf(new Node(new NodeKey($key), new NodePath($path), new JInt($val))), []];
                 case JType::FLOAT:
-                    return [TaggedNode::leaf(Node::from($node, new JFloat($val))), []];
+                    return [TaggedNode::leaf(new Node(new NodeKey($key), new NodePath($path), new JFloat($val))), []];
                 case JType::STRING:
-                    return [TaggedNode::leaf(Node::from($node, new JString($val))), []];
+                    return [TaggedNode::leaf(new Node(new NodeKey($key), new NodePath($path), new JString($val))), []];
                 case JType::NULL:
                 default:
-                    return [TaggedNode::leaf(Node::from($node, new JNull())), []];
+                    return [TaggedNode::leaf(new Node(new NodeKey($key), new NodePath($path), new JNull())), []];
             }
         };
     }

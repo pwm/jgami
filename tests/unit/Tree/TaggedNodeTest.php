@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Pwm\JGami\Tree;
 
 use PHPUnit\Framework\TestCase;
+use Pwm\JGami\Json\JNull;
 
 /**
  * @group Tree
@@ -15,7 +16,7 @@ final class TaggedNodeTest extends TestCase
      */
     public function it_instantiates_as_internal_type(): void
     {
-        $internalType = TaggedNode::internal(new Node(new NodeKey('key'), new NodePath('path')));
+        $internalType = TaggedNode::internal(new Node(new NodeKey('key'), new NodePath('path'), new JNull()));
 
         self::assertInstanceOf(TaggedNode::class, $internalType);
         self::assertTrue($internalType->isInternal());
@@ -27,7 +28,7 @@ final class TaggedNodeTest extends TestCase
      */
     public function it_instantiates_as_leaf_type(): void
     {
-        $leafType = TaggedNode::leaf(new Node(new NodeKey('key'), new NodePath('path')));
+        $leafType = TaggedNode::leaf(new Node(new NodeKey('key'), new NodePath('path'), new JNull()));
 
         self::assertInstanceOf(TaggedNode::class, $leafType);
         self::assertFalse($leafType->isInternal());
