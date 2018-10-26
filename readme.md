@@ -83,24 +83,23 @@ $expectedJson = '{
 }';
 
 // Our update function, to be mapped over our JSON data
-$f = function (JsonNode $node): JsonNode {
-    // Replace "Graphs" with "Trees"
-    if ($node->val() === 'Graphs') {
-        return StringNode::from($node, 'Trees');
+// It takes a Node and return a JVal ie. a json value
+$f = function (Node $node): JVal {
+    $jVal = $node->jVal();
+    if ($jVal->val() === 'Graphs') {
+        // Replace "Graphs" with "Trees"
+        $jVal = new JString('Trees');
+    } elseif ($node->key()->eq('age')) {
+        // Add 10 to values with key "age"
+        $jVal = new JInt($jVal->val() + 10);
+    } elseif ($node->path()->hasAll('pets', 'name')) {
+        // Add " <3" to values in paths with "pets" and "name"
+        $jVal = new JString($jVal->val() . ' <3');
+    } elseif ($node->path()->hasNone('pets') && $node->key()->eq('name')) {
+        // Add " Wonderland" to values with key "name" that has no "pets" in their path
+        $jVal = new JString($jVal->val() . ' Wonderland');
     }
-    // Add 10 to values with key "age"
-    if ($node->key()->eq('age')) {
-        return IntNode::from($node, $node->val() + 10);
-    }
-    // Add " <3" to values in paths with "pets" and "name"
-    if ($node->path()->hasAll('pets', 'name')) {
-        return StringNode::from($node, $node->val() . ' <3');
-    }
-    // Add " Wonderland" to values with key "name" that has no "pets" in their path
-    if ($node->path()->hasNone('pets') && $node->key()->eq('name')) {
-        return StringNode::from($node, $node->val() . ' Wonderland');
-    }
-    return $node;
+    return $jVal;
 };
 
 // true
@@ -127,21 +126,21 @@ $expectedJson = '{
     }
 }';
 
-$f = function (JsonNode $node): JsonNode {
+$f = function (Node $node): JVal {
+    $jVal = $node->jVal();
     if ($node->key()->eq('metadata')) {
-        // Fill in metadata, provided by our galactic overlords
+        // Metadata, provided by our galactic overlords
         $val = O::from([
             'species'       => 'Human',
             'planet'        => 'Earth',
             'galacticLevel' => 3,
             'note'          => 'Observe only',
         ]);
-        // Replace the existing value with the above
-        return ObjectNode::from($node, $val);
+        // Replace the existing string value with the above object
+        return new JObject($val);
     }
-    return $node;
+    return $jVal;
 };
-
 // true
 assert(
     json_encode(json_decode($expectedJson))
