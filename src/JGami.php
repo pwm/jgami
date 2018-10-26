@@ -15,7 +15,7 @@ use Pwm\JGami\Tree\Json\ObjectNode;
 use Pwm\JGami\Tree\Json\Prop\NodeKey;
 use Pwm\JGami\Tree\Json\Prop\NodePath;
 use Pwm\JGami\Tree\Json\StringNode;
-use Pwm\JGami\Tree\Node;
+use Pwm\JGami\Tree\TreeNode;
 use Pwm\JGami\Type\JsonType;
 use Pwm\Treegami\Tree;
 use function array_merge;
@@ -32,14 +32,14 @@ final class JGami
     public static function map(Closure $f, $json)
     {
         // Node a -> Node b
-        $wrapper = function (Node $node) use ($f): Node {
-            if ($node->isInternal()) {
-                return $node;
+        $wrapper = function (TreeNode $treeNode) use ($f): TreeNode {
+            if ($treeNode->isInternal()) {
+                return $treeNode;
             }
-            $oldJsonNode = $node->getJsonNode();
+            $oldJsonNode = $treeNode->jsonNode();
             $newJsonNode = $f($oldJsonNode);
             self::enforceSameKeyAndPath($oldJsonNode, $newJsonNode);
-            return Node::leaf($newJsonNode);
+            return TreeNode::leaf($newJsonNode);
         };
 
         $jsonType = JsonType::fromVal($json);
@@ -84,31 +84,31 @@ final class JGami
         return function ($kvPair): array {
             [$key, $path, $val] = (array)$kvPair;
 
-            $tplNode = new NullNode(new NodeKey($key), new NodePath($path));
+            $nullNode = new NullNode(new NodeKey($key), new NodePath($path));
             switch (JsonType::fromVal($val)->val()) {
                 case JsonType::OBJECT:
-                    $jsonNode = ObjectNode::from($tplNode, $val);
-                    $node = count((array)$val) > 0
-                        ? Node::internalObject($jsonNode)
-                        : Node::leaf($jsonNode);
-                    return [$node, (array)$val];
+                    $jsonNode = ObjectNode::from($nullNode, $val);
+                    $treeNode = count((array)$val) > 0
+                        ? TreeNode::internalObject($jsonNode)
+                        : TreeNode::leaf($jsonNode);
+                    return [$treeNode, (array)$val];
                 case JsonType::ARRAY:
-                    $jsonNode = ArrayNode::from($tplNode, $val);
-                    $node = count($val) > 0
-                        ? Node::internalArray($jsonNode)
-                        : Node::leaf($jsonNode);
-                    return [$node, $val];
+                    $jsonNode = ArrayNode::from($nullNode, $val);
+                    $treeNode = count($val) > 0
+                        ? TreeNode::internalArray($jsonNode)
+                        : TreeNode::leaf($jsonNode);
+                    return [$treeNode, $val];
                 case JsonType::BOOL:
-                    return [Node::leaf(BoolNode::from($tplNode, $val)), []];
+                    return [TreeNode::leaf(BoolNode::from($nullNode, $val)), []];
                 case JsonType::INT:
-                    return [Node::leaf(IntNode::from($tplNode, $val)), []];
+                    return [TreeNode::leaf(IntNode::from($nullNode, $val)), []];
                 case JsonType::FLOAT:
-                    return [Node::leaf(FloatNode::from($tplNode, $val)), []];
+                    return [TreeNode::leaf(FloatNode::from($nullNode, $val)), []];
                 case JsonType::STRING:
-                    return [Node::leaf(StringNode::from($tplNode, $val)), []];
+                    return [TreeNode::leaf(StringNode::from($nullNode, $val)), []];
                 case JsonType::NULL:
                 default:
-                    return [Node::leaf($tplNode), []];
+                    return [TreeNode::leaf($nullNode), []];
             }
         };
     }
@@ -116,15 +116,15 @@ final class JGami
     // () -> Node a -> [b] -> b
     private static function foldKVPair(): Closure
     {
-        return function (Node $node, array $acc): array {
-            if ($node->isInternal()) {
-                $val = $node->getJsonNode() instanceof ObjectNode
+        return function (TreeNode $treeNode, array $acc): array {
+            if ($treeNode->isInternal()) {
+                $val = $treeNode->jsonNode() instanceof ObjectNode
                     ? (object)array_merge(...$acc)
                     : array_merge(...$acc);
             } else {
-                $val = $node->getJsonNode()->val();
+                $val = $treeNode->jsonNode()->val();
             }
-            return [$node->getJsonNode()->key()->val() => $val];
+            return [$treeNode->jsonNode()->key()->val() => $val];
         };
     }
 

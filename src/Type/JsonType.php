@@ -27,27 +27,23 @@ final class JsonType
     public static function fromVal($val): self
     {
         if ($val instanceof stdClass) {
-            return new self(self::OBJECT);
+            $type = self::OBJECT;
+        } elseif (is_array($val)) {
+            $type = self::ARRAY;
+        } elseif (is_bool($val)) {
+            $type = self::BOOL;
+        } elseif (is_int($val)) {
+            $type = self::INT;
+        } elseif (is_float($val)) {
+            $type = self::FLOAT;
+        } elseif (is_string($val)) {
+            $type = self::STRING;
+        } elseif ($val === null) {
+            $type = self::NULL;
+        } else {
+            throw new TypeError('Not a valid JsonType.');
         }
-        if (is_array($val)) {
-            return new self(self::ARRAY);
-        }
-        if (is_bool($val)) {
-            return new self(self::BOOL);
-        }
-        if (is_int($val)) {
-            return new self(self::INT);
-        }
-        if (is_float($val)) {
-            return new self(self::FLOAT);
-        }
-        if (is_string($val)) {
-            return new self(self::STRING);
-        }
-        if ($val === null) {
-            return new self(self::NULL);
-        }
-        throw new TypeError('Not a valid NodeType.');
+        return new self($type);
     }
 
     public function val(): string
